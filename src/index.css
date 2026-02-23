@@ -1,0 +1,182 @@
+@import "tailwindcss";
+
+/* ============================================
+   DEVFOLIO — Dark-First Minimalist Card Admin
+   ============================================ */
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-brand-50: #eff6ff;
+  --color-brand-100: #dbeafe;
+  --color-brand-200: #bfdbfe;
+  --color-brand-300: #93c5fd;
+  --color-brand-400: #60a5fa;
+  --color-brand-500: #3b82f6;
+  --color-brand-600: #2563eb;
+  --color-brand-700: #1d4ed8;
+  --color-brand-800: #1e40af;
+  --color-brand-900: #1e3a8a;
+
+  --color-surface-0: #ffffff;
+  --color-surface-50: #f8fafc;
+  --color-surface-100: #f1f5f9;
+  --color-surface-200: #e2e8f0;
+  --color-surface-300: #cbd5e1;
+  --color-surface-400: #94a3b8;
+  --color-surface-500: #64748b;
+  --color-surface-600: #475569;
+  --color-surface-700: #334155;
+  --color-surface-800: #1e293b;
+  --color-surface-900: #0f172a;
+  --color-surface-950: #020617;
+
+  --color-success-50: #f0fdf4;
+  --color-success-500: #22c55e;
+  --color-success-600: #16a34a;
+  --color-warning-50: #fffbeb;
+  --color-warning-500: #f59e0b;
+  --color-warning-600: #d97706;
+  --color-danger-50: #fef2f2;
+  --color-danger-500: #ef4444;
+  --color-danger-600: #dc2626;
+  --color-info-50: #ecfeff;
+  --color-info-500: #06b6d4;
+  --color-info-600: #0891b2;
+
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+body {
+  @apply bg-surface-950 text-surface-200 font-sans antialiased;
+  margin: 0;
+  min-height: 100vh;
+}
+
+/* ── Light-mode: flip the surface color scale ──
+   Every component already uses surface-* tokens,
+   so swapping the CSS variables is enough.       */
+html.light {
+  --color-surface-0: #000000;
+  --color-surface-50: #020617;
+  --color-surface-100: #0f172a;
+  --color-surface-200: #1e293b;
+  --color-surface-300: #334155;
+  --color-surface-400: #475569;
+  --color-surface-500: #64748b;
+  --color-surface-600: #94a3b8;
+  --color-surface-700: #cbd5e1;
+  --color-surface-800: #e2e8f0;
+  --color-surface-900: #f1f5f9;
+  --color-surface-950: #ffffff;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.skip-nav {
+  @apply absolute -top-10 left-4 z-[9999] rounded-md bg-brand-600 px-4 py-2 text-white font-medium transition-all focus:top-4;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+::-webkit-scrollbar-thumb {
+  @apply rounded-full bg-surface-700;
+}
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-surface-600;
+}
+
+*:focus-visible {
+  @apply outline-2 outline-offset-2 outline-brand-500;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton {
+  @apply rounded-lg;
+  background: linear-gradient(
+    90deg,
+    var(--color-surface-800) 25%,
+    var(--color-surface-700) 50%,
+    var(--color-surface-800) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.2s ease-out;
+}
+
+/* Prose / Markdown content */
+.prose {
+  @apply text-surface-300 leading-relaxed;
+}
+.prose h1,
+.prose h2,
+.prose h3 {
+  @apply text-surface-100 font-semibold;
+}
+.prose a {
+  @apply text-brand-400 underline;
+}
+.prose code {
+  @apply rounded bg-surface-800 px-1.5 py-0.5 text-sm font-mono text-brand-300;
+}
+.prose pre {
+  @apply rounded-lg bg-surface-900 p-4 overflow-x-auto;
+}
+.prose blockquote {
+  @apply border-l-4 border-brand-500 pl-4 italic text-surface-400;
+}
+.prose ul,
+.prose ol {
+  @apply pl-6;
+}
+.prose li {
+  @apply mb-1;
+}
