@@ -47,7 +47,6 @@ export default function LoginPage() {
 
       if (isAxiosError(err) && err.response?.data) {
         const data = err.response.data;
-        console.log(data);
         if (data.detail) {
           toast.error(data.detail);
         } else if (data.non_field_errors) {

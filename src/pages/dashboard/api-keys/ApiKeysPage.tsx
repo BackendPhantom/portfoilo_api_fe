@@ -237,7 +237,7 @@ export default function ApiKeysPage() {
             }
             error={formErrors.error}
             min={1}
-            max={90}
+            max={180}
           />
         </div>
         <div className="mt-6 flex items-center justify-end gap-3">
@@ -324,28 +324,28 @@ function KeyCard({
   apiKey: ApiKey;
   onRevoke: (k: ApiKey) => void;
 }) {
-  const [revealed, setRevealed] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const copyTimeout = useRef<ReturnType<typeof setTimeout>>(undefined);
+  // const [revealed, setRevealed] = useState(false);
+  // const [copied, setCopied] = useState(false);
+  // const copyTimeout = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   const expired = apiKey.expires_at && new Date(apiKey.expires_at) < new Date();
 
   // The backend only ever stores and returns the prefix (8 chars).
   // The full raw key is never stored — it was shown once at creation.
-  const displayValue = revealed
-    ? `${apiKey.prefix}${"•".repeat(32)}` // prefix visible + remainder shown as dots
-    : `${apiKey.prefix}••••••••`;          // short masked form
+  // const displayValue = revealed
+  //   ? `${apiKey.prefix}${"•".repeat(32)}` // prefix visible + remainder shown as dots
+  //   : `${apiKey.prefix}••••••••`;          // short masked form
 
-  const copyPrefix = async () => {
-    try {
-      await navigator.clipboard.writeText(apiKey.prefix);
-      setCopied(true);
-      if (copyTimeout.current) clearTimeout(copyTimeout.current);
-      copyTimeout.current = setTimeout(() => setCopied(false), 2000);
-    } catch {
-      toast.error("Copy failed");
-    }
-  };
+  // const copyPrefix = async () => {
+  //   try {
+  //     await navigator.clipboard.writeText(apiKey.prefix);
+  //     setCopied(true);
+  //     if (copyTimeout.current) clearTimeout(copyTimeout.current);
+  //     copyTimeout.current = setTimeout(() => setCopied(false), 2000);
+  //   } catch {
+  //     toast.error("Copy failed");
+  //   }
+  // };
 
   return (
     <Card hover className="flex items-center gap-4 px-5 py-3">
@@ -364,36 +364,8 @@ function KeyCard({
           </Badge>
         </div>
 
-        {/* Key display with reveal + copy inline */}
-        <div className="flex items-center gap-1.5 mt-1">
-          <span className="font-mono text-xs text-surface-300">
-            {displayValue}
-          </span>
-
-          {/* Reveal toggle */}
-          <button
-            onClick={() => setRevealed((v) => !v)}
-            className="rounded p-0.5 text-surface-500 hover:text-surface-300 cursor-pointer"
-            aria-label={revealed ? "Hide" : "Show prefix"}>
-            {revealed ? (
-              <EyeOff className="h-3.5 w-3.5" />
-            ) : (
-              <Eye className="h-3.5 w-3.5" />
-            )}
-          </button>
-
-          {/* Copy prefix */}
-          <button
-            onClick={copyPrefix}
-            className="rounded p-0.5 text-surface-500 hover:text-surface-300 cursor-pointer"
-            aria-label="Copy key prefix">
-            {copied ? (
-              <Check className="h-3.5 w-3.5 text-success-500" />
-            ) : (
-              <Copy className="h-3.5 w-3.5" />
-            )}
-          </button>
-        </div>
+        
+        
 
         <div className="flex flex-wrap items-center gap-3 mt-0.5 text-xs text-surface-500">
           {apiKey.expires_at && (
