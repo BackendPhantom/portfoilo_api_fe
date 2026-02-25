@@ -26,7 +26,7 @@ export interface SignupPayload {
   first_name: string;
   last_name: string;
   password: string;
-  confirm_password: string;
+  password_confirm: string;
 }
 
 export interface AuthTokens {

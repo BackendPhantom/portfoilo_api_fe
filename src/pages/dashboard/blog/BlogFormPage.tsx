@@ -21,6 +21,7 @@ import Breadcrumbs from "@/components/ui/Breadcrumbs";
 import ReactMarkdown from "react-markdown";
 import toast from "react-hot-toast";
 import { isAxiosError } from "axios";
+import { extractFieldErrors } from "@/lib/api";
 import { Save, ArrowLeft, Eye, Edit3 } from "lucide-react";
 import { cn, readingTime } from "@/lib/utils";
 
@@ -107,6 +108,12 @@ export default function BlogFormPage() {
       }
       navigate("/dashboard/blog");
     } catch (err: unknown) {
+      const fieldErrors = extractFieldErrors(err);
+      if (fieldErrors) {
+        setErrors(fieldErrors);
+        return;
+      }
+
       if (isAxiosError(err) && err.response?.data) {
         const mapped: Record<string, string> = {};
         Object.entries(err.response.data).forEach(([key, val]) => {

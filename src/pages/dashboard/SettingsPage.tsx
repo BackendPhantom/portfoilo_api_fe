@@ -18,6 +18,7 @@ import Breadcrumbs from "@/components/ui/Breadcrumbs";
 import api, { createFormData, uploadConfig } from "@/lib/api";
 import toast from "react-hot-toast";
 import { isAxiosError } from "axios";
+import { extractFieldErrors } from "@/lib/api";
 import { Shield, User, Lock } from "lucide-react";
 import { labelFromSnake } from "@/lib/utils";
 
@@ -78,6 +79,13 @@ export default function SettingsPage() {
       await refreshUser();
       toast.success("Profile updated!");
     } catch (err: unknown) {
+      const fieldErrors = extractFieldErrors(err);
+      console.log(fieldErrors)
+      if (fieldErrors) {
+        setProfileErrors(fieldErrors);
+        return;
+      }
+
       if (isAxiosError(err) && err.response?.data) {
         const mapped: Record<string, string> = {};
         Object.entries(err.response.data).forEach(([key, val]) => {
@@ -120,6 +128,14 @@ export default function SettingsPage() {
         new_password_confirm: "",
       });
     } catch (err: unknown) {
+      const fieldErrors = extractFieldErrors(err);
+      console.log(fieldErrors)
+      if (fieldErrors) {
+        
+        setPasswordErrors(fieldErrors);
+        return;
+      }
+
       if (isAxiosError(err) && err.response?.data) {
         const data = err.response.data;
 

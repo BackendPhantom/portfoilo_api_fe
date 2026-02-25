@@ -38,6 +38,7 @@ import {
 import { formatDate, labelFromSnake } from "@/lib/utils";
 import toast from "react-hot-toast";
 import { isAxiosError } from "axios";
+import { extractFieldErrors } from "@/lib/api";
 
 const employmentOptions = [
   { value: "full_time", label: "Full Time" },
@@ -168,6 +169,12 @@ export default function ExperienceListPage() {
       setModalOpen(false);
       fetchExperiences();
     } catch (err: unknown) {
+      const fieldErrors = extractFieldErrors(err);
+      if (fieldErrors) {
+        setFormErrors(fieldErrors);
+        return;
+      }
+
       if (isAxiosError(err) && err.response?.data) {
         const mapped: Record<string, string> = {};
         Object.entries(err.response.data).forEach(([key, val]) => {

@@ -139,12 +139,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const storeTokens = useCallback(
     async (tokens: AuthTokens) => {
-      console.log("[Auth] storeTokens — saving tokens to localStorage");
       setTokens(tokens.access, tokens.refresh);
       startRefreshHeartbeat();
-      console.log("[Auth] storeTokens — fetching user profile…");
       await fetchUser(); // throws if /auth/user/ fails
-      console.log("[Auth] storeTokens ✓ complete");
     },
     [fetchUser]
   );

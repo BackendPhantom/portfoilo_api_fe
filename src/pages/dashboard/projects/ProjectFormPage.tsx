@@ -19,6 +19,7 @@ import PageHeader from "@/components/ui/PageHeader";
 import Breadcrumbs from "@/components/ui/Breadcrumbs";
 import toast from "react-hot-toast";
 import { isAxiosError } from "axios";
+import { extractFieldErrors } from "@/lib/api";
 import { Save, ArrowLeft } from "lucide-react";
 
 // const projectTypeOptions = [
@@ -127,6 +128,12 @@ export default function ProjectFormPage() {
       }
       navigate("/dashboard/projects");
     } catch (err: unknown) {
+      const fieldErrors = extractFieldErrors(err);
+      if (fieldErrors) {
+        setErrors(fieldErrors);
+        return;
+      }
+
       if (isAxiosError(err) && err.response?.data) {
         const mapped: Record<string, string> = {};
         Object.entries(err.response.data).forEach(([key, val]) => {

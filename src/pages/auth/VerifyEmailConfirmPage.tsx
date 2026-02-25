@@ -24,7 +24,7 @@ export default function VerifyEmailConfirmPage() {
     }
 
     api
-      .post("/auth/verify-email/", { token, uid })
+      .post("/users/verify-email/", { token, uid })
       .then(() => setStatus("success"))
       .catch(() => setStatus("error"));
   }, [token, uid]);

@@ -19,6 +19,7 @@ import { Plus, Pencil, Trash2, Award, ExternalLink } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import toast from "react-hot-toast";
 import { isAxiosError } from "axios";
+import { extractFieldErrors } from "@/lib/api";
 
 export default function CertificationsListPage() {
   const [items, setItems] = useState<Certification[]>([]);
@@ -129,6 +130,12 @@ export default function CertificationsListPage() {
       setModalOpen(false);
       fetchData();
     } catch (err: unknown) {
+      const fieldErrors = extractFieldErrors(err);
+      if (fieldErrors) {
+        setFormErrors(fieldErrors);
+        return;
+      }
+
       if (isAxiosError(err) && err.response?.data) {
         const mapped: Record<string, string> = {};
         Object.entries(err.response.data).forEach(([key, val]) => {

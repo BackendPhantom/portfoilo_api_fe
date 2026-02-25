@@ -2,7 +2,7 @@
    Devfolio — Login Page
    ============================================ */
 
-import { useState, type FormEvent } from "react";
+import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { TextInput, PasswordInput } from "@/components/ui/FormFields";
@@ -13,6 +13,7 @@ import {
 } from "@/components/auth/OAuthButtons";
 import toast from "react-hot-toast";
 import { isAxiosError } from "axios";
+import { extractFieldErrors } from "@/lib/api";
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -28,18 +29,9 @@ export default function LoginPage() {
     (location.state as { from?: { pathname: string } })?.from?.pathname ||
     "/dashboard";
 
-  const handleSubmit = async (e: FormEvent) => {
+  const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     setErrors({});
-
-    if (!email) {
-      setErrors((prev) => ({ ...prev, email: "Email is required" }));
-      return;
-    }
-    if (!password) {
-      setErrors((prev) => ({ ...prev, password: "Password is required" }));
-      return;
-    }
 
     setLoading(true);
     try {
@@ -47,8 +39,15 @@ export default function LoginPage() {
       toast.success("Welcome back!");
       navigate(from, { replace: true });
     } catch (err: unknown) {
+      const fieldErrors = extractFieldErrors(err);
+      if (fieldErrors) {
+        setErrors(fieldErrors);
+        return;
+      }
+
       if (isAxiosError(err) && err.response?.data) {
         const data = err.response.data;
+        console.log(data);
         if (data.detail) {
           toast.error(data.detail);
         } else if (data.non_field_errors) {

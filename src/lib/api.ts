@@ -3,6 +3,7 @@
    ============================================ */
 
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios";
+import { toast } from "react-hot-toast";
 import {
   getAccessToken,
   getRefreshToken,
@@ -12,6 +13,13 @@ import {
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api/v1";
+
+export interface BackendError {
+  success: boolean;
+  status_code: number;
+  message: string;
+  error?: Record<string, string[]>;
+}
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -194,13 +202,18 @@ api.interceptors.response.use(
 
     // Retry on 401 OR 403 (some Django configs return 403 for bad/missing JWT)
     const retryable =
-      error.response?.status === 401 || error.response?.status === 403;
+      error.response?.status === 401 
+
+    const isAuthRoute =
+      originalRequest?.url?.includes("/auth/login") ||
+      originalRequest?.url?.includes("/auth/signup") ||
+      originalRequest?.url?.includes("/auth/token/refresh");
 
     if (
       retryable &&
       originalRequest &&
       !originalRequest._retry &&
-      !originalRequest.url?.includes("/auth/token/refresh")
+      !isAuthRoute
     ) {
       originalRequest._retry = true;
 
@@ -216,11 +229,79 @@ api.interceptors.response.use(
       }
     }
 
+    // If no structured response body, show a generic network error
+    if (!error.response?.data) {
+      toast.error("Network error. Please try again.");
+      return Promise.reject(error);
+    }
+
+    const data = error.response.data as BackendError;
+
+    // If backend sent field validation errors, bubble them up for forms
+    if (data.error && typeof data.error === "object") {
+      return Promise.reject({ type: "validation", error: data.error });
+    }
+
+    // If backend sent a general message, show it via toast
+    if (data.error) {
+      toast.error(data.error);
+    } else {
+      toast.error("Something went wrong.");
+    }
+
     return Promise.reject(error);
   }
 );
 
 export default api;
+
+// Helper: normalize field validation errors from either the custom
+// `{ type: 'validation', errors }` rejection or from an Axios response
+// body. Returns a map of field -> first error message, or `null`.
+export function extractFieldErrors(
+  err: unknown
+): Record<string, string> | null {
+  // Validation rejection produced by the response interceptor
+  if (err && typeof err === "object" && (err as any).type === "validation") {
+    const raw = (err as any).errors as Record<string, unknown> | undefined;
+    if (raw && typeof raw === "object") {
+      const mapped: Record<string, string> = {};
+      Object.entries(raw).forEach(([k, v]) => {
+        if (Array.isArray(v)) mapped[k] = String(v[0] ?? "");
+        else mapped[k] = String(v ?? "");
+      });
+      return mapped;
+    }
+    return null;
+  }
+
+  // Axios-style error with response body
+  if (axios.isAxiosError(err) && err.response?.data) {
+    const data = err.response.data as any;
+
+    // dj-rest-auth-style { errors: { field: [..] } }
+    if (data.errors && typeof data.errors === "object") {
+      const mapped: Record<string, string> = {};
+      Object.entries(data.errors).forEach(([k, v]) => {
+        if (Array.isArray(v)) mapped[k] = String(v[0] ?? "");
+        else mapped[k] = String(v ?? "");
+      });
+      return mapped;
+    }
+
+    // Some endpoints return field errors directly in the body
+    if (typeof data === "object") {
+      const mapped: Record<string, string> = {};
+      Object.entries(data).forEach(([k, v]) => {
+        if (Array.isArray(v)) mapped[k] = String(v[0] ?? "");
+        else mapped[k] = String(v ?? "");
+      });
+      return mapped;
+    }
+  }
+
+  return null;
+}
 
 // Helper to upload files via multipart/form-data
 export function createFormData(data: Record<string, unknown>): FormData {

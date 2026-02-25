@@ -24,10 +24,13 @@ import {
   AlertTriangle,
   Clock,
   ShieldCheck,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { formatDateTime, timeAgo } from "@/lib/utils";
 import toast from "react-hot-toast";
 import { isAxiosError } from "axios";
+import { extractFieldErrors } from "@/lib/api";
 
 export default function ApiKeysPage() {
   const [keys, setKeys] = useState<ApiKey[]>([]);
@@ -39,9 +42,10 @@ export default function ApiKeysPage() {
   const [creating, setCreating] = useState(false);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
-  /* raw key display modal (shown once on creation) */
+  /* raw key display modal — shown once after creation */
   const [rawKey, setRawKey] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
+  const [rawKeyRevealed, setRawKeyRevealed] = useState(false);
+  const [rawKeyCopied, setRawKeyCopied] = useState(false);
   const copyTimeout = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   /* revoke */
@@ -52,7 +56,6 @@ export default function ApiKeysPage() {
     setLoading(true);
     try {
       const { data } = await api.get("/auth/api-keys/?page_size=100");
-      // Handle both paginated { results: [...] } and plain array responses
       const list: ApiKey[] = Array.isArray(data) ? data : data.results ?? [];
       setKeys(list);
     } catch {
@@ -86,15 +89,24 @@ export default function ApiKeysPage() {
         name: form.name,
         expires_in_days: Number(form.expires_in_days) || 90,
       };
-      const { data } = await api.post<{ key: string }>(
+      // Backend returns { id, name, prefix, api_key, expires_at, created_at }
+      const { data } = await api.post<{ api_key: string }>(
         "/auth/api-keys/create/",
         payload
       );
       toast.success("Key created!");
       setCreateOpen(false);
-      setRawKey(data.key);
+      setRawKey(data.api_key);   // ← correct field name from backend
+      setRawKeyRevealed(false);  // always start hidden
+      setRawKeyCopied(false);
       fetchData();
     } catch (err: unknown) {
+      const fieldErrors = extractFieldErrors(err);
+      if (fieldErrors) {
+        setFormErrors(fieldErrors);
+        return;
+      }
+
       if (isAxiosError(err) && err.response?.data) {
         const mapped: Record<string, string> = {};
         Object.entries(err.response.data).forEach(([k, v]) => {
@@ -102,7 +114,7 @@ export default function ApiKeysPage() {
         });
         setFormErrors(mapped);
       } else {
-        toast.error("Failed to create");
+        toast.error("Failed to create key");
       }
     } finally {
       setCreating(false);
@@ -124,13 +136,13 @@ export default function ApiKeysPage() {
     }
   };
 
-  const copyKey = async () => {
+  const copyRawKey = async () => {
     if (!rawKey) return;
     try {
       await navigator.clipboard.writeText(rawKey);
-      setCopied(true);
+      setRawKeyCopied(true);
       if (copyTimeout.current) clearTimeout(copyTimeout.current);
-      copyTimeout.current = setTimeout(() => setCopied(false), 2000);
+      copyTimeout.current = setTimeout(() => setRawKeyCopied(false), 2000);
     } catch {
       toast.error("Copy failed — select the key manually");
     }
@@ -223,8 +235,9 @@ export default function ApiKeysPage() {
             onChange={(e) =>
               setForm((p) => ({ ...p, expires_in_days: e.target.value }))
             }
+            error={formErrors.error}
             min={1}
-            max={365}
+            max={90}
           />
         </div>
         <div className="mt-6 flex items-center justify-end gap-3">
@@ -237,27 +250,45 @@ export default function ApiKeysPage() {
         </div>
       </Modal>
 
-      {/* ── Raw Key Display Modal ── */}
+      {/* ── Raw Key Display Modal (one-time, shown after creation) ── */}
       <Modal
         open={!!rawKey}
         onClose={() => setRawKey(null)}
-        title="Your API Key"
+        title="Your new API Key"
         size="lg">
         <div className="space-y-4">
           <div className="rounded-lg border border-warning-500/30 bg-warning-500/10 p-3 flex items-start gap-3">
             <AlertTriangle className="h-5 w-5 text-warning-500 shrink-0 mt-0.5" />
             <p className="text-sm text-warning-200">
               This key will only be shown <strong>once</strong>. Copy it now and
-              store it securely.
+              store it securely — it cannot be retrieved later.
             </p>
           </div>
-          <div className="relative rounded-lg bg-surface-900 p-4 font-mono text-sm text-surface-200 break-all select-all">
-            {rawKey}
+
+          {/* Key row — masked by default */}
+          <div className="flex items-center gap-2 rounded-lg bg-surface-900 px-4 py-3">
+            <span className="flex-1 font-mono text-sm text-surface-200 break-all select-all">
+              {rawKeyRevealed ? rawKey : "•".repeat(48)}
+            </span>
+
+            {/* Reveal / hide toggle */}
             <button
-              onClick={copyKey}
-              className="absolute right-3 top-3 rounded-md p-1.5 text-surface-400 hover:bg-surface-800 hover:text-surface-200 cursor-pointer"
-              aria-label="Copy">
-              {copied ? (
+              onClick={() => setRawKeyRevealed((v) => !v)}
+              className="shrink-0 rounded-md p-1.5 text-surface-400 hover:bg-surface-800 hover:text-surface-200 cursor-pointer"
+              aria-label={rawKeyRevealed ? "Hide key" : "Reveal key"}>
+              {rawKeyRevealed ? (
+                <EyeOff className="h-4 w-4" />
+              ) : (
+                <Eye className="h-4 w-4" />
+              )}
+            </button>
+
+            {/* Copy — always copies the real key value */}
+            <button
+              onClick={copyRawKey}
+              className="shrink-0 rounded-md p-1.5 text-surface-400 hover:bg-surface-800 hover:text-surface-200 cursor-pointer"
+              aria-label="Copy key">
+              {rawKeyCopied ? (
                 <Check className="h-4 w-4 text-success-500" />
               ) : (
                 <Copy className="h-4 w-4" />
@@ -265,6 +296,7 @@ export default function ApiKeysPage() {
             </button>
           </div>
         </div>
+
         <div className="mt-6 flex justify-end">
           <Button onClick={() => setRawKey(null)}>Done</Button>
         </div>
@@ -292,12 +324,35 @@ function KeyCard({
   apiKey: ApiKey;
   onRevoke: (k: ApiKey) => void;
 }) {
+  const [revealed, setRevealed] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const copyTimeout = useRef<ReturnType<typeof setTimeout>>(undefined);
+
   const expired = apiKey.expires_at && new Date(apiKey.expires_at) < new Date();
+
+  // The backend only ever stores and returns the prefix (8 chars).
+  // The full raw key is never stored — it was shown once at creation.
+  const displayValue = revealed
+    ? `${apiKey.prefix}${"•".repeat(32)}` // prefix visible + remainder shown as dots
+    : `${apiKey.prefix}••••••••`;          // short masked form
+
+  const copyPrefix = async () => {
+    try {
+      await navigator.clipboard.writeText(apiKey.prefix);
+      setCopied(true);
+      if (copyTimeout.current) clearTimeout(copyTimeout.current);
+      copyTimeout.current = setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error("Copy failed");
+    }
+  };
+
   return (
     <Card hover className="flex items-center gap-4 px-5 py-3">
       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-surface-800">
         <Key className="h-5 w-5 text-surface-400" />
       </div>
+
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <p className="font-medium text-surface-100">{apiKey.name}</p>
@@ -308,8 +363,39 @@ function KeyCard({
             {!apiKey.is_active ? "Revoked" : expired ? "Expired" : "Active"}
           </Badge>
         </div>
+
+        {/* Key display with reveal + copy inline */}
+        <div className="flex items-center gap-1.5 mt-1">
+          <span className="font-mono text-xs text-surface-300">
+            {displayValue}
+          </span>
+
+          {/* Reveal toggle */}
+          <button
+            onClick={() => setRevealed((v) => !v)}
+            className="rounded p-0.5 text-surface-500 hover:text-surface-300 cursor-pointer"
+            aria-label={revealed ? "Hide" : "Show prefix"}>
+            {revealed ? (
+              <EyeOff className="h-3.5 w-3.5" />
+            ) : (
+              <Eye className="h-3.5 w-3.5" />
+            )}
+          </button>
+
+          {/* Copy prefix */}
+          <button
+            onClick={copyPrefix}
+            className="rounded p-0.5 text-surface-500 hover:text-surface-300 cursor-pointer"
+            aria-label="Copy key prefix">
+            {copied ? (
+              <Check className="h-3.5 w-3.5 text-success-500" />
+            ) : (
+              <Copy className="h-3.5 w-3.5" />
+            )}
+          </button>
+        </div>
+
         <div className="flex flex-wrap items-center gap-3 mt-0.5 text-xs text-surface-500">
-          <span className="font-mono">{apiKey.prefix}••••••••</span>
           {apiKey.expires_at && (
             <span className="flex items-center gap-1">
               <Clock className="h-3 w-3" /> Expires{" "}
@@ -322,6 +408,7 @@ function KeyCard({
           <span>Created {timeAgo(apiKey.created_at)}</span>
         </div>
       </div>
+
       {apiKey.is_active && !expired && (
         <button
           onClick={() => onRevoke(apiKey)}

@@ -2,7 +2,7 @@
    Devfolio — Signup Page
    ============================================ */
 
-import { useState, type FormEvent } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { TextInput, PasswordInput } from "@/components/ui/FormFields";
@@ -13,6 +13,7 @@ import {
 } from "@/components/auth/OAuthButtons";
 import toast from "react-hot-toast";
 import { isAxiosError } from "axios";
+import { extractFieldErrors } from "@/lib/api";
 
 export default function SignupPage() {
   const { signup } = useAuth();
@@ -23,7 +24,7 @@ export default function SignupPage() {
     first_name: "",
     last_name: "",
     password: "",
-    confirm_password: "",
+    password_confirm: "",
   });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -39,12 +40,12 @@ export default function SignupPage() {
     if (!form.password) errs.password = "Password is required";
     else if (form.password.length < 8)
       errs.password = "Password must be at least 8 characters";
-    if (form.password !== form.confirm_password)
-      errs.confirm_password = "Passwords do not match";
+    if (form.password !== form.password_confirm)
+      errs.password_confirm = "Passwords do not match";
     return errs;
   };
 
-  const handleSubmit = async (e: FormEvent) => {
+  const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     const errs = validate();
     if (Object.keys(errs).length) {
@@ -57,9 +58,13 @@ export default function SignupPage() {
     try {
       await signup(form);
       toast.success("Account created! Please check your email to verify.");
-      navigate("/verify-email-pending");
+      navigate("/verify-email", { state: { email: form.email } });
     } catch (err: unknown) {
-      if (isAxiosError(err) && err.response?.data) {
+      const fieldErrors = extractFieldErrors(err);
+      if (fieldErrors) {
+        console.log(fieldErrors)
+        setErrors(fieldErrors);
+      } else if (isAxiosError(err) && err.response?.data) {
         const data = err.response.data;
         if (typeof data === "object") {
           const mapped: Record<string, string> = {};
@@ -149,9 +154,9 @@ export default function SignupPage() {
         <PasswordInput
           label="Confirm password"
           placeholder="Repeat your password"
-          value={form.confirm_password}
-          onChange={update("confirm_password")}
-          error={errors.confirm_password}
+          value={form.password_confirm}
+          onChange={update("password_confirm")}
+          error={errors.password_confirm}
           autoComplete="new-password"
           required
         />
