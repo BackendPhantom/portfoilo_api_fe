@@ -5,12 +5,13 @@
 import { useEffect, useState, useCallback } from "react";
 // Robust helper to extract UUID from project.id if it's a URL
 function extractId(project: Project) {
-  if (typeof project.id === "string" && project.id.includes("/")) {
+  const idStr = String(project.id);
+  if (idStr.includes("/")) {
     // Match UUID in the URL
-    const match = project.id.match(/[0-9a-fA-F-]{36}/);
-    return match ? match[0] : project.id;
+    const match = idStr.match(/[0-9a-fA-F-]{36}/);
+    return match ? match[0] : idStr;
   }
-  return project.id;
+  return idStr;
 }
 import { Link, useNavigate } from "react-router-dom";
 import api from "@/lib/api";
@@ -35,7 +36,7 @@ import {
   Search,
   FolderKanban,
 } from "lucide-react";
-import { formatDate, truncate } from "@/lib/utils";
+import {  truncate } from "@/lib/utils";
 import toast from "react-hot-toast";
 
 // const statusVariant: Record<
@@ -137,7 +138,7 @@ export default function ProjectsListPage() {
               }}
             />
           </div>
-          {/* <SelectInput
+          <SelectInput
             options={[
               { value: "", label: "All statuses" },
               { value: "planning", label: "Planning" },
@@ -164,7 +165,7 @@ export default function ProjectsListPage() {
               setTypeFilter(e.target.value);
               setPage(1);
             }}
-          /> */}
+          /> 
         </div>
       </Card>
 

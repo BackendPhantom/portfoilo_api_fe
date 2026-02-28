@@ -4,7 +4,7 @@
 
 import { useState, useEffect, type FormEvent } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import api, { uploadConfig } from "@/lib/api";
+import api from "@/lib/api";
 import type { Project, TechSkill } from "@/types";
 import Card, { CardHeader, CardTitle } from "@/components/ui/Card";
 import {
