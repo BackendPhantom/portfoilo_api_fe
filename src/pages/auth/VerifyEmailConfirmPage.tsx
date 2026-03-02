@@ -2,9 +2,10 @@
    Devfolio — Email Verification Confirm Page
    ============================================ */
 
-import { useEffect, useState, useMemo } from "react";
-import { useSearchParams, Link } from "react-router-dom";
+import { useEffect, useState, useMemo, useRef } from "react";
+import { useSearchParams, Link, useNavigate } from "react-router-dom";
 import api from "@/lib/api";
+import { useAuth } from "@/contexts/AuthContext";
 import { CheckCircle, XCircle, Loader2 } from "lucide-react";
 import Button from "@/components/ui/Button";
 
@@ -13,11 +14,17 @@ export default function VerifyEmailConfirmPage() {
   const [status, setStatus] = useState<"loading" | "success" | "error">(
     "loading"
   );
+  const navigate = useNavigate();
+  const { storeTokens } = useAuth();
+  const hasRun = useRef(false);
 
   const token = useMemo(() => searchParams.get("token"), [searchParams]);
   const uid = useMemo(() => searchParams.get("uid"), [searchParams]);
 
   useEffect(() => {
+    if (hasRun.current) return;
+    hasRun.current = true;
+
     if (!token || !uid) {
       queueMicrotask(() => setStatus("error"));
       return;
@@ -25,9 +32,18 @@ export default function VerifyEmailConfirmPage() {
 
     api
       .post("/users/verify-email/", { token, uid })
-      .then(() => setStatus("success"))
+      .then(async ({ data }) => {
+        if (data.access && data.refresh) {
+          // Auto-login: store tokens and redirect to dashboard
+          await storeTokens({ access: data.access, refresh: data.refresh });
+          navigate("/dashboard", { replace: true });
+        } else {
+          // Fallback if BE doesn't return tokens
+          setStatus("success");
+        }
+      })
       .catch(() => setStatus("error"));
-  }, [token, uid]);
+  }, [token, uid, storeTokens, navigate]);
 
   return (
     <div className="text-center">
