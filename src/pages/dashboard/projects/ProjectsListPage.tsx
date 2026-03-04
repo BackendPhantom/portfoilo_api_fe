@@ -250,7 +250,7 @@ export default function ProjectsListPage() {
                       <div className="mb-3 flex flex-wrap gap-1">
                         {project.tech_stack_display.slice(0, 4).map((tech) => (
                           <span
-                            key={`${tech.name}-${tech.category}`}
+                            key={`${tech.name}-${tech.sub_category}`}
                             className="rounded-md bg-surface-800 px-2 py-0.5 text-xs text-surface-400">
                             {tech.name}
                           </span>
