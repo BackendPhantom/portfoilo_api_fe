@@ -2,7 +2,7 @@
    Devfolio — Project Form Page (Create / Edit)
    ============================================ */
 
-import { useState, useEffect, type FormEvent } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import api from "@/lib/api";
 import type { Project, TechSkill } from "@/types";
@@ -97,7 +97,7 @@ export default function ProjectFormPage() {
     ) =>
       setForm((prev) => ({ ...prev, [field]: e.target.value }));
 
-  const handleSubmit = async (e: FormEvent) => {
+  const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     setErrors({});
 
@@ -327,8 +327,8 @@ function TechStackInput({
     const n = name.trim().toLowerCase();
     const c = category.trim().toLowerCase();
     if (!n || !c) return;
-    if (value.some((t) => t.name === n && t.category === c)) return;
-    onChange([...value, { name: n, category: c }]);
+    if (value.some((t) => t.name === n && t.sub_category === c)) return;
+    onChange([...value, { name: n, sub_category: c }]);
     setName("");
     setCategory("");
   };
@@ -355,11 +355,11 @@ function TechStackInput({
         <div className="mb-3 flex flex-wrap gap-2">
           {value.map((t, i) => (
             <span
-              key={`${t.name}-${t.category}`}
+              key={`${t.name}-${t.sub_category}`}
               className="inline-flex items-center gap-1.5 rounded-md bg-brand-600/20 px-2.5 py-1 text-xs font-medium text-brand-400">
               <span>{t.name}</span>
               <span className="text-brand-600">·</span>
-              <span className="text-brand-500/70">{t.category}</span>
+              <span className="text-brand-500/70">{t.sub_category}</span>
               <button
                 type="button"
                 onClick={() => remove(i)}

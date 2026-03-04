@@ -23,6 +23,7 @@ import SettingsPage from "@/pages/dashboard/SettingsPage";
 import ProjectsListPage from "@/pages/dashboard/projects/ProjectsListPage";
 import ProjectFormPage from "@/pages/dashboard/projects/ProjectFormPage";
 import SkillsListPage from "@/pages/dashboard/skills/SkillsListPage";
+import SoftSkillFormPage from "@/pages/dashboard/skills/SoftSkillFormPage";
 import ExperienceListPage from "@/pages/dashboard/experience/ExperienceListPage";
 import EducationListPage from "@/pages/dashboard/education/EducationListPage";
 import BlogListPage from "@/pages/dashboard/blog/BlogListPage";
@@ -72,6 +73,10 @@ export default function App() {
 
           {/* Skills */}
           <Route path="skills" element={<SkillsListPage />} />
+          <Route
+            path="skills/soft-skills/new"
+            element={<SoftSkillFormPage />}
+          />
 
           {/* Experience */}
           <Route path="experience" element={<ExperienceListPage />} />

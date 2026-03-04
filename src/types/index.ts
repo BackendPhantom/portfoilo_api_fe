@@ -77,7 +77,7 @@ export interface Project {
   // short_description: string;
   // project_type: ProjectType;
   // status: ProjectStatus;
-  featured: boolean;
+  // featured: boolean;
   live_url: string;
   github_url: string;
   thumbnail: string | null;
@@ -109,14 +109,19 @@ export interface ProjectPayload {
 /** What the backend returns for project tech_stack_display */
 export interface TechSkill {
   name: string;
-  category: string;
+  sub_category: string;
+}
+
+export interface SoftSkill {
+  name: string;
 }
 
 /** What the skills list endpoint returns */
 export interface Skill {
-  id: number;
+  id: string;
   name: string;
   category: string;
+  sub_category: string | null;
 }
 
 // ---- Experience ----
@@ -152,7 +157,7 @@ export interface ExperiencePayload {
   is_current?: boolean;
   company_url?: string;
   location?: string;
-  technology_ids?: number[];
+  technology_ids?: string[];
   order?: number;
 }
 
